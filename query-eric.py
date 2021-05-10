@@ -14,49 +14,24 @@ url = "https://api.ies.ed.gov/eric/"
 @st.cache(allow_output_mutation=True, show_spinner=False, suppress_st_warning=True)
 def load_data(query):
 
-    querystring1 = {"search": query, "format": "json"}
-    response1 = requests.request("GET", url, params=querystring1)
-    text1 = yaml.safe_load(response1.text)
-    results_max = text1["response"]["numFound"]
-
+    df_dict = {}
     my_bar = st.progress(0)
-    my_message = st.empty()
-    df = []
-    results = 0
-    start = 0
-    while results < results_max:
-        if start == 0:
-            my_message.warning(
-                "Fetched " + str(start) + " out of " + str(results_max) + " papers..."
-            )
+    for year in range(1990, 2021):
+        query_final = query + str(year)
         querystring = {
-            "search": query,
+            "search": query_final,
             "format": "json",
-            "fields": "publicationdateyear",
-            "rows": 2000,
-            "start": start,
         }
         response = requests.request("GET", url, params=querystring)
         text = yaml.safe_load(response.text)
-        df_mini = pd.DataFrame(text["response"]["docs"])
-        df.append(df_mini)
-        # keeping at least 30 results
-        results += len(df_mini)
-        start += 2000
-        if start < results_max:
-            my_message.warning(
-                "Fetched " + str(start) + " out of " + str(results_max) + " papers..."
-            )
-            my_bar.progress(start / results_max)
-        else:
-            my_message.success("Fetched all " + str(results_max) + " papers!")
-            my_bar.progress(1.0)
+        df_dict[year] = int(text["response"]["numFound"])
+        my_bar.progress(len(df_dict) / 31)
 
-    df = pd.concat(df)
+    df = pd.DataFrame(list(df_dict.items()), columns = ['Year', 'Articles'])
     return df
 
 
-st.set_page_config(page_title="Query ERIC", page_icon=":balloon:")
+st.set_page_config(page_title="Query ERIC", page_icon=":bulb:")
 
 # hiding the hamburger menu and footer
 hide_streamlit_style = """
@@ -67,25 +42,28 @@ footer {visibility: hidden;}
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.markdown("## Query ERIC")
+st.markdown("## :bulb: Query ERIC")
+st.markdown("---")
 
-st.markdown("&nbsp;")
+st.write("Generate time trends by querying the ERIC database.")
 
-query = st.text_input("Enter query...").strip()
+query = st.text_input("Enter query...").lower().strip()
+query = query.replace('"', '')
 
 st.markdown("&nbsp;")
 
 if query != "":
-    df = load_data(query)
-    df = (
-        df["publicationdateyear"]
-        .value_counts()
-        .rename_axis("year")
-        .reset_index(name="counts")
-    )
+    query = " ".join(query.split())
+    query = query.replace(" ", " AND ")
+    query = query + " AND peerreviewed:T AND publicationdateyear:"
+    with st.spinner("Fetching data from ERIC..."):
+        df = load_data(query)
     st.altair_chart(
-        alt.Chart(df).mark_area().encode(x="year:Q", y="counts:Q", tooltip=["counts"]),
+        alt.Chart(df)
+        .mark_line()
+        .encode(x="Year:Q", y="Articles:Q", tooltip=["Articles"])
+        .properties(height=450),
         use_container_width=True,
     )
-    df = df.sort_values(by=["year"])
-    st.dataframe(df)
+    df = df.sort_values(by=["Year"]).reset_index(drop=True)
+    st.table(df)
