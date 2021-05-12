@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message=F, warning=F, fig.retina = 4)
+knitr::opts_chunk$set(echo = TRUE, message=F, warning=F)
 ```
 
 ```{r message=FALSE, warning=FALSE}
@@ -24,11 +24,23 @@ df <- read_csv(here::here("data/jl_output.csv"))
 # df %>% glimpse()
 
 df %>% 
-  filter(Year >= 2000) %>% 
-  mutate(Domain = str_to_title(Domain)) %>% 
+  filter(Year >= 2000, !(Domain %in% c("big data", "data mining"))) %>% 
+  mutate(
+    Domain = str_to_title(Domain),
+    Domain = fct_reorder2(Domain, Year, Articles)
+  ) %>% 
   ggplot(aes(Year, Articles, color = Domain)) +
-  geom_smooth(se = F) +
-  theme_bw()
+  geom_smooth(se = F, method = "loess", size = 1) +
+  scale_x_continuous(breaks = scales::breaks_width(4)) +
+  scale_y_continuous(breaks = scales::breaks_width(20)) +
+  theme_classic() +
+  labs(
+    x = "Year of publication",
+    y = "Number of articles published",
+    caption = "Source: Data sourced from ERIC API"
+  )
+
+ggsave("figure_v2.png")
 
 df %>% filter(Year == 2020)
 ```
