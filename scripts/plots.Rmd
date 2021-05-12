@@ -1,0 +1,22 @@
+---
+title: 
+author: 
+date: "`r Sys.Date()`"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=F, warning=F, fig.retina = 4)
+```
+
+```{r message=FALSE, warning=FALSE}
+# Libraries
+pacman::p_load(tidyverse)
+
+# Parameters
+df <- rea
+```
+
+

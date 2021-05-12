@@ -4,3 +4,4 @@ data/
 *.xml
 *.pdf
 *.docx
+.Rproj.user
