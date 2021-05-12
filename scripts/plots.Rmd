@@ -16,7 +16,20 @@ knitr::opts_chunk$set(echo = TRUE, message=F, warning=F, fig.retina = 4)
 pacman::p_load(tidyverse)
 
 # Parameters
-df <- rea
+df <- read_csv(here::here("data/jl_output.csv"))
 ```
 
+
+```{r}
+# df %>% glimpse()
+
+df %>% 
+  filter(Year >= 2000) %>% 
+  mutate(Domain = str_to_title(Domain)) %>% 
+  ggplot(aes(Year, Articles, color = Domain)) +
+  geom_smooth(se = F) +
+  theme_bw()
+
+df %>% filter(Year == 2020)
+```
 
