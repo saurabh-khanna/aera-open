@@ -16,7 +16,7 @@ def load_data(query):
 
     df_dict = {}
     my_bar = st.progress(0)
-    for year in range(1990, 2021):
+    for year in range(1965, 2022):
         query_final = query + str(year)
         querystring = {
             "search": query_final,
@@ -25,7 +25,7 @@ def load_data(query):
         response = requests.request("GET", url, params=querystring)
         text = yaml.safe_load(response.text)
         df_dict[year] = int(text["response"]["numFound"])
-        my_bar.progress(len(df_dict) / 31)
+        my_bar.progress(len(df_dict) / 57)
 
     df = pd.DataFrame(list(df_dict.items()), columns = ['Year', 'Articles'])
     return df
