@@ -13,73 +13,40 @@ knitr::opts_chunk$set(echo = TRUE, message=F, warning=F)
 
 ```{r message=FALSE, warning=FALSE}
 # Libraries
-pacman::p_load(tidyverse)
+pacman::p_load(tidyverse, ggforce)
 
 # Parameters
-df <- read_csv(here::here("data/jl_output.csv"))
-df_educ <- read_csv(here::here("data/jl_educ.csv"))
+df <- read_csv("sna_handbook_eric.csv")
 ```
 
 ```{r}
-df %>% filter(Year == 2010)
+df %>% glimpse()
 ```
 
 
 
-```{r}
+
+```{r, fig.retina=4}
 df %>% 
-  filter(Year >= 2000, !(Domain %in% c("big data", "data mining"))) %>% 
   mutate(
-    Domain = str_to_title(Domain),
-    Domain = fct_reorder2(Domain, Year, Articles)
+    #Domain = str_to_title(Domain),
+    Domain = fct_reorder2(Domain, Year, prop_articles)
   ) %>% 
   ggplot(aes(x = Year)) +
-  geom_col(aes(y = Articles/250), data = df_educ, fill = "#b0bfd9", alpha = 0.75) +
-  geom_smooth(aes(y = Articles, color = Domain), se = F, method = "loess") +
+  geom_line(aes(y = prop_articles, color = Domain)) +
+  #geom_smooth(aes(y = prop_articles, color = Domain), se = F, method = "loess") +
   scale_x_continuous(breaks = scales::breaks_width(5)) +
-  scale_y_continuous(
-    breaks = scales::breaks_width(20), 
-    sec.axis = sec_axis(~.*250, name = "Overall article count in Education")
-  ) +
-  theme_classic() +
+  #facet_zoom(y = (Domain != "Social Network")) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_bw() +
   labs(
     x = "Year of publication",
-    y = "EDS article count",
-    title = "Growth in EDS corpus",
-    color = "EDS Domain",
-    subtitle = "EDS corpus grew at a faster rate than the overall Education corupus",
-    caption = "Source: Data sourced from ERIC API"
-  )
-
-ggsave(here::here("figure_v1.png"), units = "in", height = 4, width = 6, dpi = "retina")
-```
-
-
-```{r}
-df %>% 
-  filter(Year >= 2000) %>% 
-  left_join(df_educ, by = "Year") %>% 
-  mutate(perc = (Articles.x / Articles.y) * 100) %>% 
-  filter(!(Domain %in% c("big data", "data mining"))) %>% 
-  mutate(
-    Domain = str_to_title(Domain),
-    Domain = fct_reorder2(Domain, Year, perc)
-  ) %>% 
-  ggplot(aes(x = Year)) +
-  geom_smooth(aes(y = perc, color = Domain), se = F, method = "loess") +
-  scale_x_continuous(breaks = scales::breaks_width(5)) +
-  # scale_y_continuous(
-  #   breaks = scales::breaks_width(20)
-  # ) +
-  theme_classic() +
-  labs(
-    x = "Year of publication",
-    y = "EDS articles / Education articles (%)",
-    title = "Growth in EDS relative to the Education corpus",
-    color = "EDS Domain",
-    caption = "Source: Data sourced from ERIC API"
+    y = "Domain articles / Education articles (%)",
+    #title = "Growth in EDS relative to the Education corpus",
+    color = "Domain",
+    #caption = "Source: Data sourced from ERIC API"
   )
   
-ggsave(here::here("figure_v2.png"), units = "in", height = 4, width = 6, dpi = "retina")
+ggsave(here::here("figure_v3.png"), units = "in", height = 4, width = 6, dpi = "retina")
 ```
 
